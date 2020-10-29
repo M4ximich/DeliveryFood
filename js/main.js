@@ -23,6 +23,12 @@ const restaurants=document.querySelector('.restaurants')
 const menu=document.querySelector('.menu')
 const logo=document.querySelector('.logo')
 const cardsMenu=document.querySelector('.cards-menu')
+const getData=async function(url){
+  const response=await fetch(url)
+  if(!response.ok){throw new Error(`error ${url}, ${response.status}` )}
+  return await response.json()
+}
+getData('./db/partners.json')
 
 function toggleModalAuth(){
   modalAuth.classList.toggle('is-open')
@@ -74,22 +80,24 @@ else{
 }
 checkAuth()
 //day2
-function createCardRestaurant(){
+function createCardRestaurant(restaurant){
+  console.log(restaurant)
+  const { image, name, time_of_delivery:timeOfDelivery, stars, price, kitchen, products }=restaurant
   const card=`
-    <a class="card card-restaurant">
-      <img src="img/tanuki/preview.jpg" alt="image" class="card-image"/>
+    <a class="card card-restaurant" data-products="${products}">
+      <img src="${image}" alt="image" class="card-image"/>
       <div class="card-text">
         <div class="card-heading">
-          <h3 class="card-title">Тануки</h3>
-          <span class="card-tag tag">60 мин</span>
+          <h3 class="card-title">${name}</h3>
+          <span class="card-tag tag">${timeOfDelivery} мин</span>
         </div>
         <!-- /.card-heading -->
         <div class="card-info">
           <div class="rating">
-            4.5
+            ${stars}
           </div>
-          <div class="price">От 1 200 ₽</div>
-          <div class="category">Суши, роллы</div>
+          <div class="price">От ${price} ₽</div>
+          <div class="category">${kitchen}</div>
         </div>
         <!-- /.card-info -->
       </div>
@@ -97,22 +105,21 @@ function createCardRestaurant(){
     </a>`
   cardsRestaurants.insertAdjacentHTML('beforeend', card)
 }
-createCardRestaurant()
-createCardRestaurant()
-function createCardGood(){
+function createCardGood(goods){
+  console.log(goods)
+  const { id, name, description, price, image }=goods
   const card=document.createElement('div')
   card.className='card'
   card.insertAdjacentHTML('beforeend', `
           <div class="card">
-						<img src="img/pizza-plus/pizza-vesuvius.jpg" alt="image" class="card-image"/>
+						<img src="${image}" alt="image" class="card-image"/>
 						<div class="card-text">
 							<div class="card-heading">
-								<h3 class="card-title card-title-reg">Пицца Везувий</h3>
+								<h3 class="card-title card-title-reg">${name}</h3>
 							</div>
 							<!-- /.card-heading -->
 							<div class="card-info">
-								<div class="ingredients">Соус томатный, сыр «Моцарелла», ветчина, пепперони, перец
-									«Халапенье», соус «Тобаско», томаты.
+								<div class="ingredients">${description}
 								</div>
 							</div>
 							<!-- /.card-info -->
@@ -121,7 +128,7 @@ function createCardGood(){
 									<span class="button-card-text">В корзину</span>
 									<span class="button-cart-svg"></span>
 								</button>
-								<strong class="card-price-bold">545 ₽</strong>
+								<strong class="card-price-bold">${price} ₽</strong>
 							</div>
 						</div>
 						<!-- /.card-text -->
@@ -137,12 +144,23 @@ function openGoods(event){
     restaurants.classList.add('hide')
     menu.classList.remove('hide')
     cardsMenu.textContent=''
-    createCardGood()
+    getData(`./db/${restaurant.dataset.products}`).then(function(data){
+      data.forEach(createCardGood)
+    })
   }
 }
-cardsRestaurants.addEventListener('click', openGoods)
-logo.addEventListener('click', function(){
-  containerPromo.classList.remove('hide')
-  restaurants.classList.remove('hide')
-  menu.classList.add('hide')
-})
+
+function init(){
+  getData('./db/partners.json').then(function(data){
+    data.forEach(createCardRestaurant)
+  })
+  cardsRestaurants.addEventListener('click', openGoods)
+  logo.addEventListener('click', function(){
+    containerPromo.classList.remove('hide')
+    restaurants.classList.remove('hide')
+    menu.classList.add('hide')
+  })
+  new Swiper('.swiper-container', {loop:true, slidePerView: 1, //autoplay:true
+  })
+}
+init()
